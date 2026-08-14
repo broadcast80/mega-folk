@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>neo-war</title>
+  </head>
+  <body>
+    <main class="stage">
+      <canvas data-canvas aria-label="Карта мира neo-war"></canvas>
+
+      <div class="hud hud-left" data-performance></div>
+      <div class="hud hud-right" data-inspector></div>
+      <p class="notice" data-notice>Запуск…</p>
+
+      <button class="new-world" type="button" data-new-world>
+        Новый мир <span class="key">N</span>
+      </button>
+
+      <div class="controls">
+        <span><b>WASD</b> движение</span>
+        <span><b>Q/E</b> поворот</span>
+        <span><b>R/F</b> наклон</span>
+        <span><b>колесо</b> зум к курсору</span>
+        <span><b>ПКМ</b> вращение</span>
+        <span><b>СКМ</b> панорама</span>
+        <span><b>ЛКМ</b> выбрать гекс</span>
+        <span><b>Пробел</b> ход</span>
+        <span><b>N</b> новый мир</span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "neo-war",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:scene": "node scripts/check-scene.mjs",
+    "bench:world": "node scripts/bench-world.mjs",
+    "check": "npm run check:boundaries && npm run typecheck && npm run check:scene"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^9.21.2",
+    "@babylonjs/loaders": "^9.21.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  }
+}

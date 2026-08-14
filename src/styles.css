@@ -1,0 +1,127 @@
+:root {
+  color-scheme: dark;
+  --panel: rgb(12 16 22 / 0.72);
+  --edge: rgb(140 170 200 / 0.18);
+  --text: #dfe7f0;
+  --dim: #93a3b5;
+  --warn: #ffb457;
+  --error: #ff8b7a;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0a0d12;
+  color: var(--text);
+  font: 13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  /* The camera owns every gesture; browser panning and zooming would fight it. */
+  touch-action: none;
+}
+
+.hud {
+  position: absolute;
+  top: 12px;
+  min-width: 232px;
+  padding: 10px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.hud-left { left: 12px; }
+.hud-right { right: 12px; text-align: right; }
+
+.line { margin: 0 0 2px; white-space: nowrap; }
+.line:last-child { margin-bottom: 0; }
+.strong { font-weight: 700; letter-spacing: 0.02em; }
+.dim { color: var(--dim); }
+.warn { color: var(--warn); margin: 4px 0 0; }
+
+.notice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 620px;
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--panel);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.notice.is-done { display: none; }
+.notice.is-error { color: var(--error); border-color: rgb(255 139 122 / 0.4); }
+
+.controls {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--dim);
+  pointer-events: none;
+}
+
+.controls b { color: var(--text); font-weight: 700; }
+
+.new-world {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms;
+}
+
+.new-world:hover:not(:disabled) {
+  border-color: rgb(180 210 240 / 0.45);
+  background: rgb(24 32 44 / 0.82);
+}
+
+.new-world:disabled { opacity: 0.5; cursor: progress; }
+
+.new-world .key {
+  padding: 1px 6px;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  color: var(--dim);
+  font-size: 11px;
+}
