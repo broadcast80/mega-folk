@@ -33,6 +33,21 @@ export type AppConfig = {
   startRadius: number;
 };
 
+export type MapSizeOption = {
+  value: string;
+  label: string;
+  width: number;
+  height: number;
+};
+
+/** Linear map scales exposed in the UI. The largest has nine times the cells. */
+export const MAP_SIZE_OPTIONS: readonly MapSizeOption[] = [
+  { value: '1', label: 'Маленькая · 1×', width: 288, height: 208 },
+  { value: '1.5', label: 'Средняя · 1,5×', width: 432, height: 312 },
+  { value: '2', label: 'Большая · 2×', width: 576, height: 416 },
+  { value: '3', label: 'Огромная · 3×', width: 864, height: 624 },
+] as const;
+
 export const DEFAULT_CONFIG: AppConfig = {
   backend: 'webgpu',
 
@@ -40,7 +55,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   width: 288,
   height: 208,
   shape: 'islands',
-  landPercent: 0.36,
+  landPercent: 0.24,
   // City-folk spent two thirds of its generation time on 17–26 erosion passes.
   // The valley network is cut in the first few; the rest only rounds it off.
   erosionPasses: 10,

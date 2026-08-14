@@ -76,7 +76,14 @@ export function createTerrain(
   for (let index = 0; index < size; index++) {
     const cell = cells[index];
     const [centreX, centreZ] = surface.centreOf(cell);
-    const centreY = surface.heightForCell(cell);
+    // Water cells meet high land through averaged corners. If their blue floor
+    // is allowed to use those shared heights, it emerges above the water plane
+    // as a blue ramp climbing a mountain. Keep the submerged side of the seam
+    // below its own water surface; the plane/lake top closes the tiny gap.
+    const waterCeiling = cell.water
+      ? surface.waterHeightForCell(cell) - 0.006
+      : Infinity;
+    const centreY = Math.min(surface.heightForCell(cell), waterCeiling);
 
     const base = vertex;
     positions[vertex * 3] = centreX;
@@ -99,7 +106,7 @@ export function createTerrain(
           : surface.cornerHeight(cell, corner);
       }
       positions[vertex * 3] = centreX + CORNERS[corner][0];
-      positions[vertex * 3 + 1] = cornerY;
+      positions[vertex * 3 + 1] = Math.min(cornerY, waterCeiling);
       positions[vertex * 3 + 2] = centreZ + CORNERS[corner][1];
       colors.copyWithin(vertex * 4, base * 4, base * 4 + 4);
       vertex++;

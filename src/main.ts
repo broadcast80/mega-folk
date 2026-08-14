@@ -14,14 +14,15 @@ const notice = document.querySelector<HTMLElement>('[data-notice]');
 const performancePanel = document.querySelector<HTMLElement>('[data-performance]');
 const inspector = document.querySelector<HTMLElement>('[data-inspector]');
 const newWorld = document.querySelector<HTMLButtonElement>('[data-new-world]');
+const mapSize = document.querySelector<HTMLSelectElement>('[data-map-size]');
 
-if (!canvas || !notice || !performancePanel || !inspector || !newWorld) {
+if (!canvas || !notice || !performancePanel || !inspector || !newWorld || !mapSize) {
   throw new Error('Разметка страницы не содержит canvas, панелей HUD или кнопки нового мира.');
 }
 
 const config = readConfig();
 
-bootstrap({ canvas, notice, performance: performancePanel, inspector, newWorld }, config)
+bootstrap({ canvas, notice, performance: performancePanel, inspector, newWorld, mapSize }, config)
   .then((handle) => {
     // One handle in the console is worth a dozen debug panels: the world, the
     // game state and the camera are all reachable from it.

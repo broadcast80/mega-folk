@@ -1,4 +1,4 @@
-import type { AppConfig } from '../config.js';
+import { MAP_SIZE_OPTIONS, type AppConfig } from '../config.js';
 import { Game } from '../game/state.js';
 import { createEngine } from '../render/engine.js';
 import { createScene } from '../render/scene.js';
@@ -20,6 +20,7 @@ export type BootstrapElements = {
   performance: HTMLElement;
   inspector: HTMLElement;
   newWorld: HTMLButtonElement;
+  mapSize: HTMLSelectElement;
 };
 
 export type GameHandle = {
@@ -77,6 +78,18 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
     far: config.far,
   });
   const hud = new Hud(elements.performance, elements.inspector);
+  let mapWidth = config.width;
+  let mapHeight = config.height;
+  const initialSize = MAP_SIZE_OPTIONS.find((size) => size.width === mapWidth && size.height === mapHeight);
+  if (initialSize) {
+    elements.mapSize.value = initialSize.value;
+  } else {
+    const custom = document.createElement('option');
+    custom.value = 'custom';
+    custom.textContent = `Своя · ${mapWidth}×${mapHeight}`;
+    elements.mapSize.prepend(custom);
+    elements.mapSize.value = custom.value;
+  }
 
   /**
    * Builds one map: world data, then everything drawn from it.
@@ -89,8 +102,8 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
     const worldStart = performance.now();
     const world = new World({
       seed,
-      width: config.width,
-      height: config.height,
+      width: mapWidth,
+      height: mapHeight,
       shape: config.shape,
       landPercent: config.landPercent,
       erosionPasses: config.erosionPasses,
@@ -150,7 +163,7 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
     };
   }
 
-  await say(`Генерация мира ${config.width}×${config.height}…`);
+  await say(`Генерация мира ${mapWidth}×${mapHeight}…`);
   let layer = buildLayer(config.seed);
   let game = new Game(layer.world);
 
@@ -213,6 +226,15 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
   const onNewWorld = (): void => void regenerate();
   elements.newWorld.addEventListener('click', onNewWorld);
   disposers.push(() => elements.newWorld.removeEventListener('click', onNewWorld));
+  const onMapSize = (): void => {
+    const selected = MAP_SIZE_OPTIONS.find((size) => size.value === elements.mapSize.value);
+    if (!selected || (selected.width === mapWidth && selected.height === mapHeight)) return;
+    mapWidth = selected.width;
+    mapHeight = selected.height;
+    void regenerate(layer.world.params.seed);
+  };
+  elements.mapSize.addEventListener('change', onMapSize);
+  disposers.push(() => elements.mapSize.removeEventListener('change', onMapSize));
 
   let unsubscribe = subscribeHud();
   function subscribeHud(): () => void {
@@ -237,8 +259,9 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
     if (rebuilding) return;
     rebuilding = true;
     elements.newWorld.disabled = true;
+    elements.mapSize.disabled = true;
     notice.classList.remove('is-done');
-    await say(`Генерация мира · сид ${seed}…`);
+    await say(`Генерация мира ${mapWidth}×${mapHeight} · сид ${seed}…`);
 
     // From here to the end of the function nothing awaits, so the render loop
     // cannot observe a disposed world.
@@ -260,11 +283,13 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
     // to be the map that comes back.
     const url = new URL(location.href);
     url.searchParams.set('seed', seed);
+    url.searchParams.set('size', `${mapWidth}x${mapHeight}`);
     history.replaceState(null, '', url);
 
     notice.textContent = '';
     notice.classList.add('is-done');
     elements.newWorld.disabled = false;
+    elements.mapSize.disabled = false;
     rebuilding = false;
   }
 

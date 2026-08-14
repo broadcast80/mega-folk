@@ -54,7 +54,7 @@ export class RtsCamera {
   readonly camera: ArcRotateCamera;
 
   private readonly pressed = new Set<string>();
-  private readonly bounds: WorldBounds;
+  private bounds: WorldBounds;
   private surface: TerrainSurface;
   private readonly canvas: HTMLCanvasElement;
 
@@ -126,15 +126,18 @@ export class RtsCamera {
     camera.target.z += (this.desiredTarget.z - camera.target.z) * blend;
   }
 
-  /**
-   * Reads heights from a different world from now on.
-   *
-   * Used when the map is regenerated under a live camera. The bounds are not
-   * re-read: a new seed keeps the same map size, and a different size needs a
-   * new camera rather than a patched one.
-   */
+  /** Reads heights and movement limits from a newly generated world. */
   retarget(surface: TerrainSurface): void {
     this.surface = surface;
+    this.bounds = surface.bounds;
+    this.camera.upperRadiusLimit = Math.min(
+      this.camera.maxZ * 0.75,
+      Math.max(this.bounds.spanX, this.bounds.spanZ),
+    );
+    this.desiredRadius = clamp(this.desiredRadius, MIN_RADIUS, this.maxRadius);
+    this.camera.radius = clamp(this.camera.radius, MIN_RADIUS, this.maxRadius);
+    this.desiredTarget.x = clamp(this.desiredTarget.x, this.bounds.minX, this.bounds.maxX);
+    this.desiredTarget.z = clamp(this.desiredTarget.z, this.bounds.minZ, this.bounds.maxZ);
   }
 
   /** Moves the focus to a point, without animating through the whole map. */

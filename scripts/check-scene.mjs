@@ -43,7 +43,11 @@ globalThis.window ??= {
   removeEventListener: noop,
   devicePixelRatio: 1,
 };
-globalThis.document ??= { createElement: () => fakeCanvas, addEventListener: noop };
+globalThis.document ??= {
+  createElement: () => fakeCanvas,
+  addEventListener: noop,
+  removeEventListener: noop,
+};
 globalThis.navigator ??= { userAgent: 'node' };
 
 const entry = `
@@ -154,6 +158,7 @@ for (const mesh of vegetation.meshes) rig.addCaster(mesh);
 
 check(terrain.mesh.getTotalIndices() === WIDTH * HEIGHT * 18, `рельеф ${terrain.triangles} треугольников в одном меше`);
 check(noNaN(terrain.mesh), 'в позициях рельефа нет NaN');
+check(waterTerrainIsSubmerged(terrain.mesh, world), 'синие водные гексы не поднимаются над поверхностью воды');
 check(water.meshes.length >= 1, `вода: ${water.meshes.length} меша`);
 check(rivers.segments > 0, `реки: ${rivers.segments} сегментов`);
 check(vegetation.meshes.length === 3, `растительность в ${vegetation.meshes.length} мешах`);
@@ -209,7 +214,26 @@ try {
 check(renderError === null, `три кадра отрисованы${renderError ? `: ${renderError.message}` : ''}`);
 check(Number.isFinite(camera.camera.radius) && camera.camera.radius > 0, `радиус камеры ${camera.camera.radius.toFixed(1)}`);
 
-engine.dispose();
+const largerWorld = new api.World({
+  seed: 'check-camera-resize',
+  width: WIDTH * 2,
+  height: HEIGHT * 2,
+  shape: 'islands',
+  landPercent: 0.24,
+  erosionPasses: 1,
+  seaLevel: 0,
+});
+const oldMaxRadius = camera.maxRadius;
+camera.retarget(largerWorld.surface);
+check(camera.maxRadius > oldMaxRadius, 'границы и дальний зум камеры обновляются с размером карты');
+
+let disposeError = null;
+try {
+  engine.dispose();
+} catch (error) {
+  disposeError = error;
+}
+check(disposeError === null, `сцена освобождается${disposeError ? `: ${disposeError.message}` : ''}`);
 
 console.log('');
 if (failures.length > 0) {
@@ -223,6 +247,20 @@ function noNaN(mesh) {
   if (!positions) return false;
   for (let index = 0; index < positions.length; index++) {
     if (!Number.isFinite(positions[index])) return false;
+  }
+  return true;
+}
+
+function waterTerrainIsSubmerged(mesh, generated) {
+  const positions = mesh.getVerticesData('position');
+  if (!positions) return false;
+  for (const cell of generated.cells) {
+    if (!cell.water) continue;
+    const ceiling = generated.surface.waterHeightForCell(cell) - 0.005;
+    for (let vertex = 0; vertex < 7; vertex++) {
+      const y = positions[(cell.index * 7 + vertex) * 3 + 1];
+      if (y > ceiling) return false;
+    }
   }
   return true;
 }

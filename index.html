@@ -13,9 +13,20 @@
       <div class="hud hud-right" data-inspector></div>
       <p class="notice" data-notice>Запуск…</p>
 
-      <button class="new-world" type="button" data-new-world>
-        Новый мир <span class="key">N</span>
-      </button>
+      <div class="world-actions">
+        <label class="map-size">
+          <span>Размер</span>
+          <select data-map-size aria-label="Размер карты">
+            <option value="1">Маленькая · 1×</option>
+            <option value="1.5">Средняя · 1,5×</option>
+            <option value="2">Большая · 2×</option>
+            <option value="3">Огромная · 3×</option>
+          </select>
+        </label>
+        <button class="new-world" type="button" data-new-world>
+          Новый мир <span class="key">N</span>
+        </button>
+      </div>
 
       <div class="controls">
         <span><b>WASD</b> движение</span>

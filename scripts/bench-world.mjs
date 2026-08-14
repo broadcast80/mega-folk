@@ -83,3 +83,19 @@ console.log('биомы: ' + [...stats.biomeCounts.entries()]
   .sort((a, b) => b[1] - a[1])
   .map(([biome, count]) => `${biome} ${Math.round(count / stats.cells * 100)}%`)
   .join(' · '));
+
+if (args.has('ascii')) {
+  const columns = Math.min(96, params.width);
+  const rows = Math.min(48, params.height);
+  console.log('\nобзор суши (# суша, ^ горы, ~ вода):');
+  for (let sy = 0; sy < rows; sy++) {
+    let line = sy % 2 ? ' ' : '';
+    for (let sx = 0; sx < columns; sx++) {
+      const col = Math.min(params.width - 1, Math.floor((sx + 0.5) * params.width / columns));
+      const row = Math.min(params.height - 1, Math.floor((sy + 0.5) * params.height / rows));
+      const cell = last.generated.cellAt(col, row);
+      line += cell?.water ? '~' : cell?.biome.includes('mountain') ? '^' : '#';
+    }
+    console.log(line);
+  }
+}

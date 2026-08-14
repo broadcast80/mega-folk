@@ -26,7 +26,7 @@ export const WORLD_DEFAULTS: WorldParams = {
   width: 288,
   height: 208,
   shape: 'islands',
-  landPercent: 0.36,
+  landPercent: 0.24,
   // City-folk ran 17–26 passes here and spent two thirds of generation on them.
   // The valley network is cut in the first handful; the rest only rounds it off.
   erosionPasses: 8,

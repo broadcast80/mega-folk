@@ -93,10 +93,17 @@ canvas {
 
 .controls b { color: var(--text); font-weight: 700; }
 
-.new-world {
+.world-actions {
   position: absolute;
   right: 12px;
   bottom: 12px;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.map-size,
+.new-world {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -107,6 +114,25 @@ canvas {
   backdrop-filter: blur(8px);
   color: var(--text);
   font: inherit;
+}
+
+.map-size span { color: var(--dim); }
+
+.map-size select {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.map-size select option {
+  background: #18202c;
+  color: var(--text);
+}
+
+.new-world {
   cursor: pointer;
   transition: border-color 120ms, background-color 120ms;
 }
@@ -117,6 +143,7 @@ canvas {
 }
 
 .new-world:disabled { opacity: 0.5; cursor: progress; }
+.map-size:has(select:disabled) { opacity: 0.5; }
 
 .new-world .key {
   padding: 1px 6px;
@@ -124,4 +151,11 @@ canvas {
   border-radius: 4px;
   color: var(--dim);
   font-size: 11px;
+}
+
+@media (max-width: 820px) {
+  .controls { display: none; }
+  .world-actions { left: 12px; right: 12px; justify-content: flex-end; }
+  .map-size { flex: 1; }
+  .map-size select { min-width: 0; width: 100%; }
 }
