@@ -3,7 +3,6 @@ import { Game } from '../game/state.js';
 import { createEngine } from '../render/engine.js';
 import { createScene } from '../render/scene.js';
 import { createTerrain } from '../render/terrain.js';
-import { createWater } from '../render/water.js';
 import { createRivers } from '../render/rivers.js';
 import { createVegetation } from '../render/vegetation.js';
 import { RtsCamera } from '../render/camera.js';
@@ -120,7 +119,6 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
 
     const sceneStart = performance.now();
     const terrain = createTerrain(rig.scene, world, { shadows: config.shadows });
-    const water = createWater(rig.scene, world);
     const rivers = config.rivers
       ? createRivers(rig.scene, world)
       : { mesh: null, segments: 0, triangles: 0 };
@@ -156,7 +154,6 @@ export async function bootstrap(elements: BootstrapElements, config: AppConfig):
         rig.clearCasters();
         cursor.dispose();
         for (const mesh of vegetation.meshes) mesh.dispose(false, true);
-        for (const mesh of water.meshes) mesh.dispose(false, true);
         rivers.mesh?.dispose(false, true);
         terrain.mesh.dispose(false, true);
       },

@@ -38,8 +38,8 @@ const CORNER_OWNER: ReadonlyArray<{ direction: number; slot: 0 | 1 }> = [
 const SLOT_CORNER = [5, 2] as const;
 
 /**
- * The whole world as one mesh: seven vertices per hex, six triangles, one draw
- * call, no chunks.
+ * The whole visible surface as one mesh: land and standing water share seven
+ * vertices per hex, six triangles, one draw call, no chunks.
  *
  * Vertices are not shared between hexes, which is what lets every hex carry its
  * own flat biome colour without a second material. Corner *heights* are shared
@@ -67,8 +67,8 @@ export function createTerrain(
   const cornerCache = new Float32Array(size * 2);
   for (let index = 0; index < size; index++) {
     const cell = cells[index];
-    cornerCache[index * 2] = surface.cornerHeight(cell, SLOT_CORNER[0]);
-    cornerCache[index * 2 + 1] = surface.cornerHeight(cell, SLOT_CORNER[1]);
+    cornerCache[index * 2] = visibleCornerHeight(world, cell, SLOT_CORNER[0]);
+    cornerCache[index * 2 + 1] = visibleCornerHeight(world, cell, SLOT_CORNER[1]);
   }
 
   let vertex = 0;
@@ -76,14 +76,9 @@ export function createTerrain(
   for (let index = 0; index < size; index++) {
     const cell = cells[index];
     const [centreX, centreZ] = surface.centreOf(cell);
-    // Water cells meet high land through averaged corners. If their blue floor
-    // is allowed to use those shared heights, it emerges above the water plane
-    // as a blue ramp climbing a mountain. Keep the submerged side of the seam
-    // below its own water surface; the plane/lake top closes the tiny gap.
-    const waterCeiling = cell.water
-      ? surface.waterHeightForCell(cell) - 0.006
-      : Infinity;
-    const centreY = Math.min(surface.heightForCell(cell), waterCeiling);
+    const centreY = cell.water
+      ? surface.waterHeightForCell(cell)
+      : surface.heightForCell(cell);
 
     const base = vertex;
     positions[vertex * 3] = centreX;
@@ -103,10 +98,10 @@ export function createTerrain(
         // the corner itself. The value is the same average either way.
         cornerY = neighbour
           ? cornerCache[neighbour.index * 2 + owner.slot]
-          : surface.cornerHeight(cell, corner);
+          : visibleCornerHeight(world, cell, corner);
       }
       positions[vertex * 3] = centreX + CORNERS[corner][0];
-      positions[vertex * 3 + 1] = Math.min(cornerY, waterCeiling);
+      positions[vertex * 3 + 1] = cornerY;
       positions[vertex * 3 + 2] = centreZ + CORNERS[corner][1];
       colors.copyWithin(vertex * 4, base * 4, base * 4 + 4);
       vertex++;
@@ -165,4 +160,27 @@ export function createTerrain(
     triangles: triangleCount,
     buildMs: performance.now() - started,
   };
+}
+
+/**
+ * Height of one rendered corner, shared by all three cells meeting there.
+ * If the corner touches standing water it becomes shoreline at that water
+ * level; otherwise it keeps the natural averaged relief. This makes dry cell
+ * centres slope down into the sea while the water cells stay flat, all inside
+ * one watertight mesh.
+ */
+function visibleCornerHeight(world: World, cell: World['cells'][number], corner: number): number {
+  const index = ((corner % 6) + 6) % 6;
+  const meeting = [
+    cell,
+    world.surface.neighbourAt(cell, index - 1),
+    world.surface.neighbourAt(cell, index),
+  ];
+  let waterY = -Infinity;
+  for (const candidate of meeting) {
+    if (candidate?.water) {
+      waterY = Math.max(waterY, world.surface.waterHeightForCell(candidate));
+    }
+  }
+  return Number.isFinite(waterY) ? waterY : world.surface.cornerHeight(cell, index);
 }

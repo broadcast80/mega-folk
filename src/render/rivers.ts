@@ -4,13 +4,13 @@ import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData.js';
 import type { Scene } from '@babylonjs/core/scene.js';
 
-import type { World } from '../world/index.js';
+import { riverWidthForFlow, type World } from '../world/index.js';
 import { RIVER_COLOR } from './palette.js';
 
 export type RiverResult = { mesh: Mesh | null; segments: number; triangles: number };
 
 /** Where a river sits above the ground it runs on, to keep it off the z-buffer fight. */
-const LIFT = 0.03;
+const LIFT = 0.045;
 
 /**
  * Rivers as one ribbon mesh through the cell centres they drain.
@@ -45,8 +45,12 @@ export function createRivers(scene: Scene, world: World): RiverResult {
     const dx = toX - fromX;
     const dz = toZ - fromZ;
     const length = Math.hypot(dx, dz);
-    if (length < 1e-4) continue;
-    const half = widthFor(river.flow) / 2;
+    // Hydrology wraps east/west, while the current renderer deliberately shows
+    // one flat copy of the cylindrical world. A neighbour across that seam is
+    // hundreds of units away in rendered coordinates; joining the two centres
+    // would draw a flashing blue stripe across the entire continent.
+    if (length < 1e-4 || length > 2.1) continue;
+    const half = riverWidthForFlow(river.flow) / 2;
     // Perpendicular in the ground plane; the ribbon is always horizontal in
     // cross-section, however steep the valley it runs down.
     const px = (-dz / length) * half;
@@ -81,6 +85,12 @@ export function createRivers(scene: Scene, world: World): RiverResult {
   // map, so both faces are drawn rather than guessing an orientation per
   // segment. The normals are authored straight up regardless.
   material.backFaceCulling = false;
+  // Rivers are surface decals. Let the terrain establish scene depth, then
+  // draw every part of the river without writing depth again. Tributary ribbons
+  // overlap at confluences; if they write depth they fight each other whenever
+  // the camera moves, despite having the same colour and height.
+  material.disableDepthWrite = true;
+  material.zOffset = -1;
   material.freeze();
   mesh.material = material;
   mesh.isPickable = false;
@@ -88,11 +98,6 @@ export function createRivers(scene: Scene, world: World): RiverResult {
   mesh.freezeWorldMatrix();
 
   return { mesh, segments, triangles: segments * 2 };
-}
-
-/** Wider with catchment, but flattening out: a big river is not a lake. */
-function widthFor(flow: number): number {
-  return Math.min(0.72, 0.16 + Math.sqrt(Math.max(0, flow)) * 0.022);
 }
 
 function write(positions: Float32Array, normals: Float32Array, vertex: number, x: number, y: number, z: number): void {

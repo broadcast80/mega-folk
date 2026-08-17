@@ -26,7 +26,7 @@ export type SurfaceSettings = {
   ridgeAmplitude: number;
   /** Above 1 keeps the lower flanks gentle and saves the height for the crest. */
   ridgeExponent: number;
-  /** Where the sea plane sits. Just above 0, so the shore is never z-fighting. */
+  /** Height of the sea vertices in the integrated terrain/water surface. */
   seaSurfaceY: number;
 };
 
@@ -191,7 +191,7 @@ export class TerrainSurface {
     return this.heightFromElevation(elevation, x, z) + this.ridgeLift(ridge);
   }
 
-  /** Height of the water surface on a cell: the sea plane, or the lake's level. */
+  /** Height of the water surface on a cell: global sea, or the lake's level. */
   waterHeightForCell(cell: WorldCell): number {
     if (cell.waterKind !== 'lake') return this.settings.seaSurfaceY;
     const [x, z] = this.centreOf(cell);

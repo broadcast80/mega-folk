@@ -19,6 +19,7 @@ export { planVegetation, naturalForestCover, VEGETATION_DEFAULTS } from './veget
 export { generateWorld } from './generator.js';
 export * from './hexLayout.js';
 export { mulberry32, hashString, hashCoords } from './random.js';
+export { riverWidthForFlow } from './riverShape.js';
 export type { Rng } from './random.js';
 
 export const WORLD_DEFAULTS: WorldParams = {

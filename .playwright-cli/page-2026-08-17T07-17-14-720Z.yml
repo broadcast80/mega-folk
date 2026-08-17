@@ -1,0 +1,28 @@
+- main [ref=e2]:
+  - generic "Карта мира neo-war" [ref=e3]
+  - generic:
+    - paragraph: ход 1
+    - paragraph: курсор вне карты
+    - paragraph: ЛКМ — выбрать гекс
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: Размер
+      - combobox "Размер карты" [ref=e7] [cursor=pointer]:
+        - option "Своя · 96×72" [selected]
+        - option "Маленькая · 1×"
+        - option "Средняя · 1,5×"
+        - option "Большая · 2×"
+        - option "Огромная · 3×"
+    - button "Новый мир N" [ref=e8] [cursor=pointer]:
+      - text: Новый мир
+      - generic [ref=e9]: "N"
+  - generic:
+    - generic: WASD движение
+    - generic: Q/E поворот
+    - generic: R/F наклон
+    - generic: колесо зум к курсору
+    - generic: ПКМ вращение
+    - generic: СКМ панорама
+    - generic: ЛКМ выбрать гекс
+    - generic: Пробел ход
+    - generic: N новый мир

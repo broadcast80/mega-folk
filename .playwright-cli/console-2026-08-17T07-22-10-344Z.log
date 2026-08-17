@@ -1,0 +1,7 @@
+[     202ms] [LOG] BJS - [10:22:10]: Babylon.js v9.21.2 - WebGL2 @ http://127.0.0.1:5181/node_modules/.vite/deps/chunk-J4DZ2XK7.js?v=1d17eb56:44
+[     246ms] [WARNING] [.WebGL-0xc540019c200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://127.0.0.1:5181/?backend=webgl&size=96x72&shadows=0&res=1:0
+[     391ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:5181/favicon.ico:0
+[     391ms] [WARNING] [.WebGL-0xc540019c200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://127.0.0.1:5181/?backend=webgl&size=96x72&shadows=0&res=1:0
+[     431ms] [WARNING] [.WebGL-0xc540019c200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://127.0.0.1:5181/?backend=webgl&size=96x72&shadows=0&res=1:0
+[     711ms] [WARNING] [.WebGL-0xc540019c200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat) @ http://127.0.0.1:5181/?backend=webgl&size=96x72&shadows=0&res=1:0
+[   73797ms] [LOG] BJS - [10:23:24]: Babylon.js v9.21.2 - WebGL2 @ http://127.0.0.1:5181/node_modules/.vite/deps/chunk-J4DZ2XK7.js?v=1d17eb56:44

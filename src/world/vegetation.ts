@@ -2,6 +2,7 @@ import { INRADIUS } from './hexLayout.js';
 import { hashCoords, hashString } from './random.js';
 import type { TerrainSurface } from './surface.js';
 import type { WorldCell } from './types.js';
+import { riverWidthForFlow } from './riverShape.js';
 
 /**
  * Where plants grow, decided from world data alone.
@@ -120,6 +121,13 @@ export function planVegetation(
   const { cells, params } = surface.world;
   const seed = hashString(`${params.seed}:vegetation`);
   const seaLevel = params.seaLevel;
+  // A cell has at most one outgoing river segment. Indexing it once lets every
+  // candidate plant inspect its own segment and the six segments entering from
+  // neighbours without scanning the entire river network.
+  const riverFrom = new Int32Array(cells.length).fill(-1);
+  for (let index = 0; index < surface.world.rivers.length; index++) {
+    riverFrom[surface.world.rivers[index].from] = index;
+  }
 
   // Capacity from the actual wooded area rather than from the cell count: a
   // 36%-land map would otherwise allocate three times the buffer it fills.
@@ -151,6 +159,7 @@ export function planVegetation(
       const y = surface.heightInCell(cell, spot.x, spot.z);
       // A shoreline hex is half beach: keep trunks out of the water.
       if (y <= surface.settings.seaSurfaceY + 0.02) continue;
+      if (touchesRiver(surface, riverFrom, cell, spot.x, spot.z, 0.2)) continue;
       push(trees, spot.x, y, spot.z,
         0.8 + spot.a * 0.9,
         spot.b * Math.PI * 2,
@@ -161,6 +170,7 @@ export function planVegetation(
       const spot = placeInHex(seed ^ 0x5bf03635, cell, slot, centreX, centreZ, radius);
       const y = surface.heightInCell(cell, spot.x, spot.z);
       if (y <= surface.settings.seaSurfaceY + 0.02) continue;
+      if (touchesRiver(surface, riverFrom, cell, spot.x, spot.z, 0.28)) continue;
       push(bushes, spot.x, y, spot.z,
         0.55 + spot.a * 0.55,
         spot.b * Math.PI * 2,
@@ -169,6 +179,55 @@ export function planVegetation(
   }
 
   return { trees: seal(trees), bushes: seal(bushes), woodedHexes };
+}
+
+/** True when a plant crown/trunk would overlap a river or its immediate bank. */
+function touchesRiver(
+  surface: TerrainSurface,
+  riverFrom: Int32Array,
+  cell: WorldCell,
+  x: number,
+  z: number,
+  clearance: number,
+): boolean {
+  if (riverFrom[cell.index] >= 0 && nearSegment(surface, riverFrom[cell.index], x, z, clearance)) return true;
+  for (let direction = 0; direction < 6; direction++) {
+    const neighbour = surface.neighbourAt(cell, direction);
+    if (!neighbour) continue;
+    const segment = riverFrom[neighbour.index];
+    // The clearance around a wide channel and its centre junction can extend
+    // slightly into every adjacent hex, even when that channel flows onward in
+    // another direction rather than directly into this cell.
+    if (segment >= 0 && nearSegment(surface, segment, x, z, clearance)) return true;
+  }
+  return false;
+}
+
+function nearSegment(
+  surface: TerrainSurface,
+  segmentIndex: number,
+  x: number,
+  z: number,
+  clearance: number,
+): boolean {
+  const segment = surface.world.rivers[segmentIndex];
+  const from = surface.world.cells[segment.from];
+  const to = surface.world.cells[segment.to];
+  const [ax, az] = surface.centreOf(from);
+  const [bx, bz] = surface.centreOf(to);
+  const dx = bx - ax;
+  const dz = bz - az;
+  const lengthSquared = dx * dx + dz * dz;
+  // Same flat-map seam rule as the river renderer: this logical connection is
+  // not a visible segment until the renderer itself gains wrapped copies.
+  if (lengthSquared > 2.1 * 2.1) return false;
+  const amount = lengthSquared > 0
+    ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / lengthSquared))
+    : 0;
+  const offsetX = x - (ax + dx * amount);
+  const offsetZ = z - (az + dz * amount);
+  const radius = riverWidthForFlow(segment.flow) / 2 + clearance;
+  return offsetX * offsetX + offsetZ * offsetZ < radius * radius;
 }
 
 /** Hashed point inside a hex, plus three spare unit values for the caller. */

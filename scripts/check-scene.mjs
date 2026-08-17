@@ -55,13 +55,12 @@ const entry = `
   import { World, planVegetation } from '${posix(path.join(root, 'src/world/index.ts'))}';
   import { createScene } from '${posix(path.join(root, 'src/render/scene.ts'))}';
   import { createTerrain } from '${posix(path.join(root, 'src/render/terrain.ts'))}';
-  import { createWater } from '${posix(path.join(root, 'src/render/water.ts'))}';
   import { createRivers } from '${posix(path.join(root, 'src/render/rivers.ts'))}';
   import { createVegetation } from '${posix(path.join(root, 'src/render/vegetation.ts'))}';
   import { RtsCamera } from '${posix(path.join(root, 'src/render/camera.ts'))}';
   import { HexCursor } from '${posix(path.join(root, 'src/render/hexCursor.ts'))}';
   import { Game } from '${posix(path.join(root, 'src/game/state.ts'))}';
-  export { NullEngine, World, planVegetation, createScene, createTerrain, createWater,
+  export { NullEngine, World, planVegetation, createScene, createTerrain,
     createRivers, createVegetation, RtsCamera, HexCursor, Game };
 `;
 
@@ -151,18 +150,19 @@ const rig = api.createScene(engine, {
   far: 2000,
 });
 const terrain = api.createTerrain(rig.scene, world, { shadows: true });
-const water = api.createWater(rig.scene, world);
 const rivers = api.createRivers(rig.scene, world);
 const vegetation = api.createVegetation(rig.scene, plan, { shadows: true });
 for (const mesh of vegetation.meshes) rig.addCaster(mesh);
 
-check(terrain.mesh.getTotalIndices() === WIDTH * HEIGHT * 18, `рельеф ${terrain.triangles} треугольников в одном меше`);
+check(terrain.mesh.getTotalIndices() === WIDTH * HEIGHT * 18, `суша и вода: ${terrain.triangles} треугольников в одном меше`);
 check(noNaN(terrain.mesh), 'в позициях рельефа нет NaN');
-check(waterTerrainIsSubmerged(terrain.mesh, world), 'синие водные гексы не поднимаются над поверхностью воды');
-check(water.meshes.length >= 1, `вода: ${water.meshes.length} меша`);
+check(waterSurfaceIsIntegrated(terrain.mesh, world), 'водные клетки встроены в рельеф на своём уровне');
+check(rig.scene.getMeshByName('sea') === null && rig.scene.getMeshByName('lakes') === null,
+  'отдельных слоёв моря и озёр нет');
 check(rivers.segments > 0, `реки: ${rivers.segments} сегментов`);
 check(vegetation.meshes.length === 3, `растительность в ${vegetation.meshes.length} мешах`);
 check(plan.trees.count > 0 && vegetation.triangles > 0, `${plan.trees.count} деревьев, ${vegetation.triangles} треугольников`);
+check(vegetationClearsRivers(plan, world), 'деревья и кусты не пересекают русла рек');
 // A thin-instance buffer that never reached the mesh leaves the count undefined
 // and draws exactly one prototype at the origin, with no error anywhere.
 check(
@@ -251,15 +251,37 @@ function noNaN(mesh) {
   return true;
 }
 
-function waterTerrainIsSubmerged(mesh, generated) {
+function waterSurfaceIsIntegrated(mesh, generated) {
   const positions = mesh.getVerticesData('position');
   if (!positions) return false;
   for (const cell of generated.cells) {
     if (!cell.water) continue;
-    const ceiling = generated.surface.waterHeightForCell(cell) - 0.005;
-    for (let vertex = 0; vertex < 7; vertex++) {
-      const y = positions[(cell.index * 7 + vertex) * 3 + 1];
-      if (y > ceiling) return false;
+    const centreY = positions[(cell.index * 7) * 3 + 1];
+    if (Math.abs(centreY - generated.surface.waterHeightForCell(cell)) > 1e-5) return false;
+  }
+  return true;
+}
+
+function vegetationClearsRivers(plan, generated) {
+  for (const layer of [plan.trees, plan.bushes]) {
+    for (let item = 0; item < layer.count; item++) {
+      const x = layer.position[item * 3];
+      const z = layer.position[item * 3 + 2];
+      for (const river of generated.rivers) {
+        const from = generated.cells[river.from];
+        const to = generated.cells[river.to];
+        const [ax, az] = generated.surface.centreOf(from);
+        const [bx, bz] = generated.surface.centreOf(to);
+        const dx = bx - ax;
+        const dz = bz - az;
+        const lengthSquared = dx * dx + dz * dz;
+        if (lengthSquared > 2.1 * 2.1) continue;
+        const amount = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / lengthSquared));
+        const px = x - (ax + dx * amount);
+        const pz = z - (az + dz * amount);
+        const width = Math.min(0.72, 0.16 + Math.sqrt(Math.max(0, river.flow)) * 0.022);
+        if (px * px + pz * pz < (width / 2 + 0.19) ** 2) return false;
+      }
     }
   }
   return true;
